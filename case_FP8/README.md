@@ -174,37 +174,37 @@ Public gateway load test with [`Tests/bench_concurrent.py`](../Tests/bench_concu
 
 ```
 ─ TTFT (streaming) ─────────────────────────────────────
-  # 1  TTFT = 0.98s
-  # 2  TTFT = 0.97s
-  # 3  TTFT = 0.96s
-  # 4  TTFT = 0.68s
-  # 5  TTFT = 0.98s
+  # 1  TTFT = 0.88s
+  # 2  TTFT = 0.85s
+  # 3  TTFT = 0.86s
+  # 4  TTFT = 0.61s
+  # 5  TTFT = 0.85s
 
-  TTFT: min 0.7s  p50 1.0s  p95 1.0s  max 1.0s
+  TTFT: min 0.6s  p50 0.9s  p95 0.9s  max 0.9s
 
 ─ Throughput (non-streaming) ───────────────────────────
  #  max_tok  duration  tokens     tok/s  status
 ───────────────────────────────────────────────
- 1     1249      41.8s    1249      29.9     200
- 2     1081      49.7s    1081      21.8     200
- 3     1034      15.1s     422      27.9     200
- 4     1214      21.0s     594      28.3     200
- 5      413      14.7s     413      28.1     200
- 6      454      16.3s     454      27.8     200
- 7      677      28.8s     415      14.4     200
- 8      650      23.2s     650      28.1     200
- 9     1626      53.8s    1626      30.2     200
-10     1042      35.6s    1042      29.3     200
+ 1      654      23.1s     654      28.3     200
+ 2      828      41.5s     828      19.9     200
+ 3     1081      13.8s     390      28.2     200
+ 4     1247      37.2s     616      16.6     200
+ 5     1359      40.9s    1196      29.2     200
+ 6      510      18.3s     510      27.9     200
+ 7     1628      16.6s     463      27.8     200
+ 8      916      31.8s     916      28.8     200
+ 9     1195      40.9s    1195      29.2     200
+10     1640      55.2s    1640      29.7     200
 
 ─ Summary ──────────────────────────────────────────────
   Success:  10/10  (100%)  |  0 errors
-  Throughput:  0.2 req/s  |  148 tok/s
-  Latency:     min 14.7s  p50 28.8s  p95 53.8s  max 53.8s
-  Tokens/req:  min 413  p50 650  p95 1626  max 1626
-  Tok/s:       min 14.4  p50 28.1  p95 30.2  max 30.2
+  Throughput:  0.2 req/s  |  152 tok/s
+  Latency:     min 13.8s  p50 37.2s  p95 55.2s  max 55.2s
+  Tokens/req:  min 390  p50 828  p95 1640  max 1640
+  Tok/s:       min 16.6  p50 28.3  p95 29.7  max 29.7
 ```
 
-Takeaways: first-token latency is ~1 s at full concurrency; per-stream decode holds ~28 tok/s with a few outliers on longer generations (rows 2, 7); aggregate throughput 148 tok/s across 10 parallel streams.
+Takeaways: first-token latency is ~0.9 s at full concurrency; per-stream decode holds ~28 tok/s with outliers when a request is interleaved with longer generations (rows 2, 4); aggregate throughput 152 tok/s across 10 parallel streams.
 
 ## 9. Reference — Deploying the Stack
 
