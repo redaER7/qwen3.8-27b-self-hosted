@@ -1,0 +1,9 @@
+apiVersion: serving.kserve.io/v1alpha1
+kind: LLMInferenceServiceConfig
+metadata:
+  name: llm-inference-service-config-model
+  namespace: beta
+spec:
+  model:
+    uri: hf://Qwen/Qwen3.8-27B
+    name: Qwen/Qwen3.8-27B

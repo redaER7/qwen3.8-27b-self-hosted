@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: vllm-monitor
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - gamma
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: llminferenceservice-workload
+  endpoints:
+    - port: https
+      path: /metrics
+      interval: 15s

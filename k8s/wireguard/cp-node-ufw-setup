@@ -1,0 +1,31 @@
+# Set default policies
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw default deny routed
+
+# Enable logging (low level)
+sudo ufw logging on
+
+# Allow SSH (port 22) from anywhere
+sudo ufw allow 22/tcp
+
+# Allow HTTPS (port 443) from anywhere
+sudo ufw allow 443/tcp
+
+# Allow WireGuard (port 51820/udp) from anywhere
+sudo ufw allow 51820/udp
+
+# Allow VXLAN (port 8472/udp) from 10.10.0.0/24 subnet only
+sudo ufw allow from 10.10.0.0/24 to any port 8472 proto udp
+
+# Allow Kubernetes API (port 6443/tcp) from 10.10.0.0/24 subnet only
+sudo ufw allow from 10.10.0.0/24 to any port 6443 proto tcp
+
+# Allow port 10250 (Kubelet API) to specific node
+sudo ufw allow from 10.10.0.0/24 to any port 10250 proto tcp
+
+# Enable the firewall
+sudo ufw enable
+
+# Check status
+sudo ufw status verbose

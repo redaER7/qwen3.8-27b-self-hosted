@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextchat
+  namespace: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nextchat
+  template:
+    metadata:
+      labels:
+        app: nextchat
+    spec:
+      containers:
+        - name: nextchat
+          image: yidadaa/chatgpt-next-web:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: BASE_URL
+              value: "https://llm.yacodata.com"
+            - name: CUSTOM_MODELS
+              value: "Qwen/Qwen3.8-27B-FP8"
+            - name: CODE
+              valueFrom:
+                secretKeyRef:
+                  name: nextchat-secret
+                  key: code
+          resources:
+            requests:
+              memory: 56Mi
+              cpu: 20m
+            limits:
+              memory: 1Gi
+              cpu: 2
+      volumes: []

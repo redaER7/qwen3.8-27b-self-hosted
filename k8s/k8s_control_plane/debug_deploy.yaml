@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+  name: debug-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: debug-app
+  template:
+    metadata:
+      labels:
+        app: debug-app
+        component: debug-app
+    spec:
+      hostNetwork: true                    # Added this line
+      nodeSelector:
+        node-role.kubernetes.io/gpu-node: "true"
+      tolerations:
+      - key: "gpu-node"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      containers:
+      - command:
+        - /bin/sleep
+        - 1d
+        image: ubuntu:22.04
+        imagePullPolicy: IfNotPresent
+        name: debug-app

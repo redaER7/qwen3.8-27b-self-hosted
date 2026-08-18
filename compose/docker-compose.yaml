@@ -1,0 +1,63 @@
+services:
+  vllm:
+    image: vllm/vllm-openai:qwen38
+    command:
+      - --model
+      - ${MODEL_ID:-Qwen/Qwen3.8-27B-FP8}
+      - --served-model-name
+      - ${MODEL_NAME:-Qwen/Qwen3.8-27B-FP8}
+      - --port
+      - "8000"
+      - --host
+      - "0.0.0.0"
+      - --dtype
+      - ${DTYPE:-float16}
+      - --tensor-parallel-size
+      - ${TP_SIZE:-1}
+      - --max-model-len
+      - ${MAX_MODEL_LEN:-8192}
+      - --max-num-seqs
+      - ${MAX_NUM_SEQS:-4}
+      - --gpu-memory-utilization
+      - ${GPU_MEMORY_UTILIZATION:-0.95}
+      - --enable-prefix-caching
+      - --enable-auto-tool-choice
+      - --tool-call-parser
+      - qwen3_coder
+      - --reasoning-parser
+      - qwen3
+    environment:
+      HF_TOKEN: ${HF_TOKEN:?Set HF_TOKEN in .env (HuggingFace read token)}
+      HF_HUB_CACHE: /models
+      HF_XET_HIGH_PERFORMANCE: "1"
+      VLLM_LOGGING_LEVEL: INFO
+    volumes:
+      - hf-models:/models
+      - vllm-cache:/root/.cache
+    shm_size: "16g"
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: ${GPU_COUNT:-1}
+              capabilities: [gpu]
+    restart: unless-stopped
+
+  nextchat:
+    image: yidadaa/chatgpt-next-web:latest
+    depends_on:
+      - vllm
+    environment:
+      BASE_URL: http://vllm:8000
+      CUSTOM_MODELS: ${MODEL_NAME:-Qwen/Qwen3.8-27B-FP8}
+      CODE: ${NEXTCHAT_CODE:-}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+volumes:
+  hf-models:
+  vllm-cache:

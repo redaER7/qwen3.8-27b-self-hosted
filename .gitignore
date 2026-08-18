@@ -1,0 +1,34 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secrets / env
+.env
+.env.*
+*.pem
+*.key
+kubeconfig*
+
+# logs
+*.txt
+*.log
+
+# Docker
+.docker/
+
+# Logs
+*.log
+
+# Temp
+tmp/
+*.tmp
+
+# Media
+*.mov
+*.mp4

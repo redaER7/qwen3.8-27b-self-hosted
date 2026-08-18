@@ -1,0 +1,100 @@
+apiVersion: serving.kserve.io/v1alpha1
+kind: LLMInferenceServiceConfig
+metadata:
+  name: llm-inference-service-config-workload
+  namespace: beta
+spec:
+  replicas: 1
+  template:
+    hostNetwork: true
+    nodeSelector:
+      node-role.kubernetes.io/gpu-node: "true"
+    tolerations:
+      - key: "gpu-node"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+    imagePullSecrets:
+      - name: registry-credentials
+    containers:
+      - name: main
+        image: vllm/vllm-openai:qwen38
+        command:
+          - python3
+          - -m
+          - vllm.entrypoints.openai.api_server
+        args:
+          - --model
+          - Qwen/Qwen3.8-27B
+          - --port
+          - "8000"
+          - --host
+          - "0.0.0.0"
+          - --dtype
+          - bfloat16
+          - --tensor-parallel-size
+          - "2"
+          - --max-model-len
+          - "262144"
+          - --max-num-seqs
+          - "8"
+          - --gpu-memory-utilization
+          - "0.90"
+          - --download-dir
+          - /mnt/huggingface/models
+          - --enable-prefix-caching
+          - --enable-auto-tool-choice
+          - --tool-call-parser
+          - qwen3_coder
+          - --reasoning-parser
+          - qwen3
+        env:
+          - name: HF_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: hf-token
+                key: token
+          - name: HF_XET_HIGH_PERFORMANCE
+            value: "1"
+          - name: HF_HUB_CACHE
+            value: /mnt/huggingface/models
+          - name: VLLM_LOGGING_LEVEL
+            value: "INFO"
+          - name: PYTHONUNBUFFERED
+            value: "1"
+          - name: NVIDIA_VISIBLE_DEVICES
+            value: "all"
+          - name: NVIDIA_DRIVER_CAPABILITIES
+            value: "compute,utility"
+        volumeMounts:
+          - name: dshm
+            mountPath: /dev/shm
+          - name: hf-models
+            mountPath: /mnt/huggingface/models
+          - name: vllm-cache
+            mountPath: /home/.cache
+        resources:
+          limits:
+            nvidia.com/gpu: "2"
+            memory: 76Gi
+          requests:
+            nvidia.com/gpu: "2"
+            memory: 48Gi
+        securityContext:
+          runAsNonRoot: false
+          capabilities:
+            drop:
+              - ALL
+    volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 16Gi
+      - name: hf-models
+        hostPath:
+          path: /mnt/hf-models
+          type: DirectoryOrCreate
+      - name: vllm-cache
+        hostPath:
+          path: /mnt/vllm-cache
+          type: DirectoryOrCreate

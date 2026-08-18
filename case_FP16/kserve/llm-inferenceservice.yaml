@@ -1,0 +1,11 @@
+apiVersion: serving.kserve.io/v1alpha1
+kind: LLMInferenceService
+metadata:
+  name: llm-server
+  namespace: beta
+spec:
+  storageInitializer:
+    enabled: false
+  baseRefs:
+    - name: llm-inference-service-config-model
+    - name: llm-inference-service-config-workload

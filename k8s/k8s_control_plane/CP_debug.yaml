@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+  name: cp-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: cp-app
+  template:
+    metadata:
+      labels:
+        app: cp-app
+        component: cp-app
+    spec:
+      hostNetwork: true                    # Added this line
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
+
+      containers:
+      - command:
+        - /bin/sleep
+        - 1d
+        image: ubuntu:22.04
+        imagePullPolicy: IfNotPresent
+        name: cp-app

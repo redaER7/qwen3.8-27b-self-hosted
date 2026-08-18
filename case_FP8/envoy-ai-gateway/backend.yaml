@@ -1,0 +1,25 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: llm-server-inferencepool-backend
+  namespace: beta
+spec:
+  endpoints:
+    - fqdn:
+        hostname: llm-server-kserve-workload-svc.beta.svc.cluster.local
+        port: 8000
+---
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIServiceBackend
+metadata:
+  name: llm-server-backend
+  namespace: beta
+spec:
+  backendRef:
+    group: gateway.envoyproxy.io
+    kind: Backend
+    name: llm-server-inferencepool-backend
+  schema:
+    name: OpenAI
+    version: v1
+

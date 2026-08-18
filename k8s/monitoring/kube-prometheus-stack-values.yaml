@@ -1,0 +1,120 @@
+# Helm values for kube-prometheus-stack
+# Installs Prometheus, Grafana, Alertmanager, node_exporter, kube-state-metrics.
+# All monitoring workloads scheduled on GPU node to keep CP node lightweight.
+
+# -- Global image registry (leave default)
+global:
+  imageRegistry: ""
+
+# -- Prometheus configuration
+prometheus:
+  enabled: true
+  prometheusSpec:
+    retention: 7d
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 20m
+        memory: 32Mi
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 5Gi
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+    #nodeSelector:
+    #  node-role.kubernetes.io/gpu-node: "true"
+    tolerations:
+      - key: "gpu-node"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+
+# -- Grafana configuration
+grafana:
+  enabled: true
+  adminPassword: admin
+  resources:
+    limits:
+      cpu: 1
+      memory: 512Mi
+    requests:
+      cpu: 10m
+      memory: 56Mi
+  persistence:
+    enabled: true
+    size: 5Gi
+  ingress:
+    enabled: false
+  service:
+    type: ClusterIP
+    port: 3000
+  #nodeSelector:
+  #  node-role.kubernetes.io/gpu-node: "true"
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+      provider:
+        allowUiUpdates: true
+  tolerations:
+    - key: "gpu-node"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+
+# -- Alertmanager configuration
+alertmanager:
+  enabled: true
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 16Mi
+  alertmanagerSpec:
+    #nodeSelector:
+    #  node-role.kubernetes.io/gpu-node: "true"
+    tolerations:
+      - key: "gpu-node"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+
+# -- Node exporter (DaemonSet on all nodes)
+nodeExporter:
+  enabled: true
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
+
+# -- kube-state-metrics
+kubeStateMetrics:
+  enabled: true
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 16Mi
+  #nodeSelector:
+  #  node-role.kubernetes.io/gpu-node: "true"
+  tolerations:
+    - key: "gpu-node"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"

@@ -1,0 +1,23 @@
+apiVersion: aigateway.envoyproxy.io/v1beta1
+kind: AIGatewayRoute
+metadata:
+  name: beta-route
+  namespace: beta
+spec:
+  parentRefs:
+    - name: ai-gateway
+      namespace: envoy-ai-gateway-system
+  rules:
+    - matches:
+        - headers:
+            - name: x-ai-eg-model
+              value: "Qwen/Qwen3.8-27B-FP8"
+      backendRefs:
+        - name: llm-server-backend
+  llmRequestCosts:
+    - metadataKey: llm_input_token
+      type: InputToken
+    - metadataKey: llm_output_token
+      type: OutputToken
+    - metadataKey: llm_total_token
+      type: TotalToken
