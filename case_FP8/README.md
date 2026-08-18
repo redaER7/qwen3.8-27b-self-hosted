@@ -161,9 +161,51 @@ curl -s https://llm.yacodata.com/v1/chat/completions \
   -d '{"model":"Qwen/Qwen3.8-27B-FP8","messages":[{"role":"user","content":"Say hello in one word"}],"max_tokens":50}'
 ```
 
-Concurrent load test: [`Tests/bench_concurrent.py`](../Tests/bench_concurrent.py) (`MODEL="Qwen/Qwen3.8-27B"` served name), `MAX_TOKENS_MAX=1800`.
+Concurrent load test: [`Tests/bench_concurrent.py`](../Tests/bench_concurrent.py) (`MODEL="Qwen/Qwen3.8-27B-FP8"` served name), `MAX_TOKENS_MAX=1800`. Measured results in [§8](#8-load-test-results-measured).
 
-## 8. Reference — Deploying the Stack
+## 8. Load Test Results (measured)
+
+Public gateway load test with [`Tests/bench_concurrent.py`](../Tests/bench_concurrent.py):
+
+- **Load**: 10 concurrent requests to `https://llm.yacodata.com/v1/chat/completions`
+- **Model**: `Qwen/Qwen3.8-27B-FP8`
+- **TTFT probes**: 5 · **max_tokens**: 300–1800
+
+```
+─ TTFT (streaming) ─────────────────────────────────────
+  # 1  TTFT = 0.98s
+  # 2  TTFT = 0.97s
+  # 3  TTFT = 0.96s
+  # 4  TTFT = 0.68s
+  # 5  TTFT = 0.98s
+
+  TTFT: min 0.7s  p50 1.0s  p95 1.0s  max 1.0s
+
+─ Throughput (non-streaming) ───────────────────────────
+ #  max_tok  duration  tokens     tok/s  status
+───────────────────────────────────────────────
+ 1     1249      41.8s    1249      29.9     200
+ 2     1081      49.7s    1081      21.8     200
+ 3     1034      15.1s     422      27.9     200
+ 4     1214      21.0s     594      28.3     200
+ 5      413      14.7s     413      28.1     200
+ 6      454      16.3s     454      27.8     200
+ 7      677      28.8s     415      14.4     200
+ 8      650      23.2s     650      28.1     200
+ 9     1626      53.8s    1626      30.2     200
+10     1042      35.6s    1042      29.3     200
+
+─ Summary ──────────────────────────────────────────────
+  Success:  10/10  (100%)  |  0 errors
+  Throughput:  0.2 req/s  |  148 tok/s
+  Latency:     min 14.7s  p50 28.8s  p95 53.8s  max 53.8s
+  Tokens/req:  min 413  p50 650  p95 1626  max 1626
+  Tok/s:       min 14.4  p50 28.1  p95 30.2  max 30.2
+```
+
+Takeaways: first-token latency is ~1 s at full concurrency; per-stream decode holds ~28 tok/s with a few outliers on longer generations (rows 2, 7); aggregate throughput 148 tok/s across 10 parallel streams.
+
+## 9. Reference — Deploying the Stack
 
 ### Requirements
 
