@@ -128,6 +128,7 @@ The gateway, backend, and rate-limit YAMLs in `envoy-ai-gateway/` are identical 
 - `No available shared memory broadcast block found in 60 seconds` during compilation is benign — the engine is compiling, not hung. Successful startup ends with `Application startup complete`.
 - The vision encoder cache initializes with a budget of 16384 tokens (multimodal encoder; expected).
 - Watch for `torch.cuda.OutOfMemoryError` — the dense checkpoint fits ~80 GB with ~14 GiB/GPU headroom.
+- **Large request bodies**: the AI Gateway ext-proc buffers the full request body, and Envoy Gateway's default downstream per-connection buffer is only 32 KiB — bigger payloads (e.g. a benchmark harness sending long prompts) fail with `413 Payload Too Large`. `envoy-ai-gateway/client-traffic-policy.yaml` raises it to 32 MiB; the rate-limit BackendTrafficPolicy likewise raises the upstream buffer. Tune `bufferLimit` if you send even bigger payloads.
 
 ## 7. Validation
 

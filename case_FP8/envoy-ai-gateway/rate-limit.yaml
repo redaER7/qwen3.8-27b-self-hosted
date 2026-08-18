@@ -8,6 +8,8 @@ spec:
     - group: gateway.networking.k8s.io
       kind: Gateway
       name: ai-gateway
+  connection:
+    bufferLimit: 32Mi
   rateLimit:
     type: Local
     local:

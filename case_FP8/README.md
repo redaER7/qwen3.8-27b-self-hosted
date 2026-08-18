@@ -147,6 +147,7 @@ Client → https://llm.yacodata.com:443
 - The repeated `No available shared memory broadcast block found in 60 seconds` log lines during compilation are **benign** — the engine is busy compiling, not hung. Successful startup ends with `Application startup complete`.
 - **No `--enforce-eager`**: CUDA graphs work fine with FP8 on sm_89; keep them on for throughput.
 - Watch for real failures via `torch.cuda.OutOfMemoryError`; the model fits at 27.8 GiB/GPU steady state with ~4 GiB headroom.
+- **Large request bodies**: the AI Gateway ext-proc buffers the full request body, and Envoy Gateway's default downstream per-connection buffer is only 32 KiB — bigger payloads (e.g. a benchmark harness sending long prompts) fail with `413 Payload Too Large`. `envoy-ai-gateway/client-traffic-policy.yaml` raises it to 32 MiB; the rate-limit BackendTrafficPolicy likewise raises the upstream buffer (large non-streaming responses). Tune `bufferLimit` if you send even bigger payloads.
 
 ## 7. Validation
 
@@ -318,6 +319,7 @@ Firewall reference (GPU node): `29817–29836` UDP (WireGuard inbound), `8472` U
 | `envoy-ai-gateway/backend.yaml` | Backend + AIServiceBackend (Backend points to InferencePool) |
 | `envoy-ai-gateway/cors-policy.yaml` | SecurityPolicy (CORS for NextChat origin) |
 | `envoy-ai-gateway/rate-limit.yaml` | BackendTrafficPolicy (30 req/min) |
+| `envoy-ai-gateway/client-traffic-policy.yaml` | ClientTrafficPolicy — downstream buffer 32 MiB (see §6) |
 | `envoy-ai-gateway/httproute-nextchat.yaml` | HTTPRoute routing `chat.yacodata.com` → NextChat |
 | `kserve/llm-inference-service-config-model.yaml` | Model source (HF repo + served model name) |
 | `kserve/llm-inference-service-config-workload.yaml` | Workload config (vLLM image, args, resources, GPU scheduling) |
