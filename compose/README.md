@@ -14,7 +14,7 @@ This is the lightweight, single-user version of the [case_FP8](../case_FP8/READM
 
 | GPUs | Config | Typical cards |
 |------|--------|---------------|
-| 1× ≥40 GB | `TP_SIZE=1` (default) | A100 40GB, A6000 48GB, H100 |
+| 1× ≥40 GB | `TP_SIZE=1` (default) | RTX 6000 Pro 96GB, A100 40GB, A6000 48GB, H100 |
 | 2× ≥24 GB | `TP_SIZE=2`, `GPU_COUNT=2` | 2× RTX 4090/3090, 2× RTX 4080 Super |
 
 > A single 24 GB card (RTX 4090/3090) does **not** hold the FP8 weights at TP1 (~29 GiB) — use two cards with `TP_SIZE=2` (weights drop to ~16 GiB/GPU).
@@ -61,5 +61,5 @@ Weights persist in the `hf-models` volume; the vLLM torch.compile + Triton cache
 - **Shared memory**: `shm_size: 16g` is set — if you see shared-memory errors, the host must have at least 16 GB of `/dev/shm` free.
 - **GPU not used**: verify the toolkit with `docker run --rm --gpus all nvidia/cuda:12.8.0-base-ubuntu22.04 nvidia-smi`, then `docker compose down && docker compose up -d`.
 - **`No available shared memory broadcast block found in 60 seconds`** during startup is benign — the engine is compiling.
-- **Switching to the dense BF16 checkpoint** (needs ~80 GB VRAM): set `MODEL_ID=Qwen/Qwen3.8-27B`, `MODEL_NAME=Qwen/Qwen3.8-27B`, `DTYPE=bfloat16` — see [case_FP16](../case_FP16/README.md).
+- **Switching to the dense BF16 checkpoint** (needs 96 GB VRAM, e.g. RTX 6000 Pro): set `MODEL_ID=Qwen/Qwen3.8-27B`, `MODEL_NAME=Qwen/Qwen3.8-27B`, `DTYPE=bfloat16` — see [case_FP16](../case_FP16/README.md).
 - For the full multi-user Kubernetes deployment with Envoy AI Gateway, token metering, rate limiting, and TLS: [case_FP8](../case_FP8/README.md).

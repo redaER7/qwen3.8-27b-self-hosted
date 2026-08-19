@@ -33,7 +33,7 @@ spec:
           - --dtype
           - bfloat16
           - --tensor-parallel-size
-          - "2"
+          - "1"
           - --max-model-len
           - "262144"
           - --max-num-seqs
@@ -75,10 +75,10 @@ spec:
             mountPath: /home/.cache
         resources:
           limits:
-            nvidia.com/gpu: "2"
+            nvidia.com/gpu: "1"
             memory: 76Gi
           requests:
-            nvidia.com/gpu: "2"
+            nvidia.com/gpu: "1"
             memory: 48Gi
         securityContext:
           runAsNonRoot: false

@@ -5,7 +5,7 @@ Self-host **Qwen/Qwen3.8-27B** — a 27B hybrid-attention LLM with 262k native c
 | Option | Where | Hardware | Context |
 |--------|-------|----------|---------|
 | [**case_FP8**](case_FP8/README.md) | Kubernetes (KServe + Envoy AI Gateway) | 2× RTX 4080 Super 32GB (FP8, TP2) | 32768 |
-| [**case_FP16**](case_FP16/README.md) | Kubernetes (KServe + Envoy AI Gateway) | 2× A100 40GB (BF16, TP2) | 262144 (native) |
+| [**case_FP16**](case_FP16/README.md) | Kubernetes (KServe + Envoy AI Gateway) | 1× RTX 6000 Pro 96GB (BF16, TP1) | 262144 (native) |
 | [**compose**](compose/README.md) | Docker Compose (single user) | 1× ≥40GB or 2× ≥24GB GPU | 8192 default |
 
 **Tags**: `qwen3.8-27b` `qwen3.8` `vllm` `kserve` `envoy-ai-gateway` `self-hosted-llm` `gpu-inference` `fp8`
@@ -31,17 +31,17 @@ Requires vLLM ≥ 0.17.0; the official [vLLM recipe](https://recipes.vllm.ai/Qwe
 | | Dense BF16 (case_FP16) | FP8 (case_FP8) |
 |---|-----------------------:|---------------:|
 | Download | ~55.6 GB | ~31 GB |
-| Weights/GPU @ TP2 | ~26 GiB | ~16 GiB |
-| Minimum VRAM | ~80 GB | ~40 GB |
+| Weights | ~52 GiB (TP1) | ~16 GiB/GPU (TP2) |
+| Minimum VRAM | 96 GB (RTX 6000 Pro) | ~40 GB |
 | Precision | Full BF16 | FP8 (official quant) |
 
-The dense BF16 checkpoint (~52 GiB) does **not** fit 2× 32GB GPUs — it OOMs during weight load. The official FP8 checkpoint halves the weights and fits 2× 32GB with ~16 GiB/GPU weights and ~27.8 GiB/GPU steady state at 32768 ctx. Choose case_FP16 when you have ~80 GB VRAM and want the full-precision model at native 262k context.
+The dense BF16 checkpoint (~52 GiB) does **not** fit 2× 32GB GPUs — it OOMs during weight load. The official FP8 checkpoint halves the weights and fits 2× 32GB with ~16 GiB/GPU weights and ~27.8 GiB/GPU steady state at 32768 ctx. Choose case_FP16 when you have a 96 GB GPU (e.g. RTX 6000 Pro) and want the full-precision model at native 262k context.
 
 ## Repository Layout
 
 ```
 ├── case_FP8/               # K8s: FP8 on 2× 32GB GPUs (active deployment)
-├── case_FP16/              # K8s: dense BF16 on ~80 GB VRAM
+├── case_FP16/              # K8s: dense BF16 on RTX 6000 Pro 96GB
 ├── compose/                # Standalone single-user docker-compose (vLLM + NextChat)
 ├── k8s/                    # Shared Kubernetes infrastructure
 │   ├── k8s_control_plane/  #   K3s control plane setup

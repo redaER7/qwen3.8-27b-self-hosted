@@ -35,9 +35,9 @@ Qwen publishes an official **FP8** quantized checkpoint (`Qwen/Qwen3.8-27B-FP8`,
 |---|-----------:|---------------:|
 | Download size | ~55.6 GB (51.7 GiB) | ~31 GB (~29 GiB) |
 | Weights/GPU @ TP2 | ~26 GiB → **OOM on 2×32GB** | ~16 GiB → fits with headroom |
-| Minimum VRAM | ~80 GB (e.g. 2× A100 40GB) | ~40 GB (2× 32GB works) |
+| Minimum VRAM | 96 GB (RTX 6000 Pro) | ~40 GB (2× 32GB works) |
 
-FP8 halves the weights at negligible quality cost and is the format we run here. The full-precision model remains an option if you have ~80 GB VRAM — the config is otherwise identical.
+FP8 halves the weights at negligible quality cost and is the format we run here. The full-precision model remains an option if you have 96 GB VRAM (e.g. RTX 6000 Pro) — the config is otherwise identical.
 
 ### Checkpoint layout (`Qwen/Qwen3.8-27B-FP8`)
 - 64 layer shards (model weights) — ~24.4 GB
@@ -214,7 +214,7 @@ Takeaways: first-token latency is ~0.9 s at full concurrency; per-stream decode 
 Same K3s setup as the shared infrastructure: control plane on Hetzner CX33 (4 vCPU / 8 GB RAM), GPU worker joined as a K3s agent with label `node-role.kubernetes.io/gpu-node`. See the repo-level [Kubernetes Setup](../README.md#kubernetes-setup-shared-infrastructure) steps.
 
 #### GPU (Trooper AI — 2× RTX 4080 Super 32GB)
-See §3. Summary: FP8 Qwen3.8-27B via TP2 → ~16 GiB weights/GPU, 27.8 GiB/GPU steady state at 32768 ctx. The dense BF16 checkpoint requires ~80 GB VRAM (e.g. 2× A100 40GB).
+See §3. Summary: FP8 Qwen3.8-27B via TP2 → ~16 GiB weights/GPU, 27.8 GiB/GPU steady state at 32768 ctx. The dense BF16 checkpoint requires 96 GB VRAM (e.g. RTX 6000 Pro).
 
 #### Software Stack
 | Component | Version | Notes |

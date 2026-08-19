@@ -1,8 +1,8 @@
 # Case FP16 — Qwen3.8-27B (Dense BF16)
 
-Serving **Qwen/Qwen3.8-27B** — the full-precision dense checkpoint — on two A100 40GB GPUs (~80 GB total) via vLLM (tensor-parallel), fronted by KServe (LLMInferenceService) and the Envoy AI Gateway. This is the **unquantized** sibling of [case_FP8](../case_FP8/README.md): it trades GPU budget for full BF16 precision and the model's **native 262k context**.
+Serving **Qwen/Qwen3.8-27B** — the full-precision dense checkpoint — on a single NVIDIA RTX 6000 Pro 96 GB via vLLM (TP1), fronted by KServe (LLMInferenceService) and the Envoy AI Gateway. This is the **unquantized** sibling of [case_FP8](../case_FP8/README.md): it trades GPU budget for full BF16 precision and the model's **native 262k context**.
 
-Model-focused layout: hardware, quantization decision, and serving parameters below are all derived from what the model needs. The serving stack (Envoy AI Gateway → KServe → vLLM) is the "how"; the model and its full-precision form on ~80 GB VRAM is the "why".
+Model-focused layout: hardware, quantization decision, and serving parameters below are all derived from what the model needs. The serving stack (Envoy AI Gateway → KServe → vLLM) is the "how"; the model and its full-precision form on a 96 GB RTX 6000 Pro is the "why".
 
 ---
 
@@ -30,27 +30,27 @@ This case runs the **dense BF16 checkpoint** — no quantization:
 | | Dense BF16 | FP8 (case_FP8) |
 |---|-----------:|---------------:|
 | Download size | ~55.6 GB (51.7 GiB) | ~31 GB (~29 GiB) |
-| Weights/GPU @ TP2 | ~26 GiB | ~16 GiB |
-| Minimum VRAM | ~80 GB (2× A100 40GB) | ~40 GB (2× 32GB works) |
-| Context @ TP2 | 262144 (native) | 32768 (configured) |
+| Weights | ~52 GiB (TP1) | ~16 GiB/GPU (TP2) |
+| Minimum VRAM | 96 GB (1× RTX 6000 Pro) | ~40 GB (2× 32GB works) |
+| Context | 262144 (native) | 32768 (configured) |
 | Precision | Full BF16 | FP8 quantized |
 
-Choose **case_FP16** when you have ~80 GB VRAM and want the full-precision model at its native 262k context. Choose [case_FP8](../case_FP8/README.md) when you have 2× 32GB GPUs — the FP8 checkpoint halves the weights to fit.
+Choose **case_FP16** when you have 96 GB VRAM (RTX 6000 Pro) and want the full-precision model at its native 262k context. Choose [case_FP8](../case_FP8/README.md) when you have 2× 32GB GPUs — the FP8 checkpoint halves the weights to fit.
 
 ## 3. Hardware & Sizing
 
 | | Value |
 |---|---|
-| GPU | 2× NVIDIA A100 40GB (80 GB total) |
-| Total VRAM | 80 GB |
-| Interconnect | NVLink (A100 SXM) or PCIe (PCIe variant) — P2P expected |
-| Weights/GPU @ TP2 | ~26 GiB |
-| Left for KV cache + activations | ~14 GiB/GPU (at util 0.90) |
+| GPU | 1× NVIDIA RTX 6000 Pro 96 GB (Blackwell, GDDR7) |
+| Total VRAM | 96 GB |
+| Interconnect | N/A — single GPU (PCIe Gen5; no NVLink on RTX 6000 Pro) |
+| Weights (TP1) | ~52 GiB |
+| Left for KV cache + activations | ~34 GiB (at util 0.90; KV@262k ≈ 16 GiB) |
 | Context | 262144 (native) |
 
-BF16 Qwen3.8-27B (~52 GiB weights) via TP2 → ~26 GiB/GPU of weights, ~14 GiB/GPU left for KV cache + activations. Because 48/64 layers are linear-attention, KV stays small even at 262k context — the remaining budget is comfortable for batch 8.
+BF16 Qwen3.8-27B (~52 GiB weights) via TP1 on a single RTX 6000 Pro → ~34 GiB (at util 0.90) left for KV cache + activations. At 262k context the full-attention KV is ~16 GiB, so the remaining ~18 GiB comfortably covers batch 8, CUDA graphs, and workspace. Because 48/64 layers are linear-attention, KV stays small even at 262k context.
 
-> **This does not fit 2× 32GB.** On RTX 4080 Super 32GB the dense checkpoint OOMs during weight load. Use case_FP16 only on ~80 GB VRAM nodes.
+> **This does not fit 2× 32GB.** On RTX 4080 Super 32GB the dense checkpoint OOMs during weight load. Use case_FP16 only on a 96 GB VRAM node (RTX 6000 Pro) or equivalent.
 
 ## 4. Serving Configuration
 
@@ -64,7 +64,7 @@ args:
   - --port                 8000
   - --host                 0.0.0.0
   - --dtype                bfloat16
-  - --tensor-parallel-size 2
+  - --tensor-parallel-size 1
   - --max-model-len        262144
   - --max-num-seqs         8
   - --gpu-memory-utilization 0.90
@@ -78,7 +78,7 @@ args:
 | Setting | Why |
 |---------|-----|
 | `--dtype bfloat16` | Native dtype of the dense checkpoint (no quantization) |
-| `--tensor-parallel-size 2` | Splits the model across both 40GB cards |
+| `--tensor-parallel-size 1` | Single GPU (RTX 6000 Pro 96 GB) — no splitting needed |
 | `--max-model-len 262144` | The model's **native** context window |
 | `--max-num-seqs 8` | Concurrency; KV stays small thanks to hybrid attention |
 | `--gpu-memory-utilization 0.90` | Leave ~10% for CUDA graphs + workspace |
@@ -112,7 +112,7 @@ Client → https://llm.yacodata.com:443
            ▼
          KServe internal gateway → workload service
            ▼
-         vLLM pod (GPU node, hostNetwork, 10.10.0.2:8000, TP2)
+         vLLM pod (GPU node, hostNetwork, 10.10.0.2:8000, TP1)
 ```
 
 - **KServe** (`LLMInferenceService` in namespace `beta`) manages the deployment, service, InferencePool, and routing.
@@ -127,7 +127,7 @@ The gateway, backend, and rate-limit YAMLs in `envoy-ai-gateway/` are identical 
 - **First-boot compile**: vLLM torch-compiles the model (~5–20 min for the full Triton kernel set). The `vllm-cache` volume persists this under `/home/.cache/vllm`, so later restarts skip it.
 - `No available shared memory broadcast block found in 60 seconds` during compilation is benign — the engine is compiling, not hung. Successful startup ends with `Application startup complete`.
 - The vision encoder cache initializes with a budget of 16384 tokens (multimodal encoder; expected).
-- Watch for `torch.cuda.OutOfMemoryError` — the dense checkpoint fits ~80 GB with ~14 GiB/GPU headroom.
+- Watch for `torch.cuda.OutOfMemoryError` — the dense checkpoint fits the RTX 6000 Pro with ~18 GiB headroom.
 - **Large request bodies**: the AI Gateway ext-proc buffers the full request body, and Envoy Gateway's default downstream per-connection buffer is only 32 KiB — bigger payloads (e.g. a benchmark harness sending long prompts) fail with `413 Payload Too Large`. `envoy-ai-gateway/client-traffic-policy.yaml` raises it to 32 MiB; the rate-limit BackendTrafficPolicy likewise raises the upstream buffer. Tune `bufferLimit` if you send even bigger payloads.
 
 ## 7. Validation
@@ -149,12 +149,12 @@ Concurrent load test: [`Tests/bench_concurrent.py`](../Tests/bench_concurrent.py
 ### Requirements
 
 - **Kubernetes Cluster** — same shared setup as case_FP8: control plane on Hetzner CX33, GPU worker joined with label `node-role.kubernetes.io/gpu-node`. See repo-level [Kubernetes Setup](../README.md#kubernetes-setup-shared-infrastructure) steps.
-- **GPU (2× A100 40GB)** — see §3. The dense BF16 checkpoint requires ~80 GB VRAM.
+- **GPU (1× NVIDIA RTX 6000 Pro 96GB)** — see §3. The dense BF16 checkpoint requires 96 GB VRAM.
 - **Software Stack** — identical to case_FP8: K3s v1.33+, cert-manager 1.18+, Envoy Gateway v1.8+, AI Gateway Controller v1.0.0, LWS Operator v0.9+, KServe v0.18+, vLLM `vllm/vllm-openai:qwen38`.
 
 ### Install Order
 
-Identical to case_FP8 — run [k8s_deploy.sh](k8s_deploy.sh) after [k8s_secrets.sh](k8s_secrets.sh). Full 25-step order: see [case_FP8 README §8](../case_FP8/README.md#8-reference--deploying-the-stack). The only differences are the model config (`uri: hf://Qwen/Qwen3.8-27B`, `name: Qwen/Qwen3.8-27B`), the workload args (`--dtype bfloat16`, `--max-model-len 262144`), and the gateway/rate-limit model-name match.
+Identical to case_FP8 — run [k8s_deploy.sh](k8s_deploy.sh) after [k8s_secrets.sh](k8s_secrets.sh). Full 25-step order: see [case_FP8 README §8](../case_FP8/README.md#8-reference--deploying-the-stack). The only differences are the model config (`uri: hf://Qwen/Qwen3.8-27B`, `name: Qwen/Qwen3.8-27B`), the workload args (`--dtype bfloat16`, `--tensor-parallel-size 1`, `--max-model-len 262144`, `nvidia.com/gpu: 1`), and the gateway/rate-limit model-name match.
 
 ### WireGuard Setup
 
