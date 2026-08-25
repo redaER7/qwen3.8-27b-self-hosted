@@ -22,5 +22,5 @@ spec:
           limit:
             # 100 req/min while box is bench-only (bench sweeps peak ~300+ req/min);
             # lower to 30 for production
-            requests: 100
+            requests: 1000
             unit: Minute

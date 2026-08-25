@@ -76,10 +76,10 @@ spec:
         resources:
           limits:
             nvidia.com/gpu: "2"
-            memory: 76Gi
+            memory: 92Gi
           requests:
             nvidia.com/gpu: "2"
-            memory: 48Gi
+            memory: 82Gi
         securityContext:
           runAsNonRoot: false
           capabilities:
