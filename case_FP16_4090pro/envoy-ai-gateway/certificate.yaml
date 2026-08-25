@@ -1,0 +1,43 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-issuer
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@yacodata.com
+    privateKeySecretRef:
+      name: letsencrypt-key
+    solvers:
+      - dns01:
+          cloudflare:
+            email: admin@yacodata.com
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: envoy-tls-cert
+  namespace: envoy-ai-gateway-system
+spec:
+  secretName: envoy-tls-cert
+  dnsNames:
+    - llm.yacodata.com
+  issuerRef:
+    name: letsencrypt-issuer
+    kind: ClusterIssuer
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: chat-tls-cert
+  namespace: envoy-ai-gateway-system
+spec:
+  secretName: chat-tls-cert
+  dnsNames:
+    - chat.yacodata.com
+  issuerRef:
+    name: letsencrypt-issuer
+    kind: ClusterIssuer

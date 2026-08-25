@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-endpoint-picker-config
+  namespace: beta
+data:
+  endpoint-picker-config.yaml: |
+    apiVersion: inference.networking.x-k8s.io/v1alpha1
+    kind: EndpointPickerConfig
+    plugins:
+      - type: single-profile-handler
+      - type: prefix-cache-scorer
+      - type: load-aware-scorer
+        parameters:
+          threshold: 50
+      - type: max-score-picker
+    schedulingProfiles:
+      - name: default
+        plugins:
+          - pluginRef: prefix-cache-scorer
+            weight: 2.0
+          - pluginRef: load-aware-scorer
+            weight: 1.0
+          - pluginRef: max-score-picker
