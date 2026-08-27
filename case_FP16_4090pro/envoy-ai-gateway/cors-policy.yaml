@@ -1,0 +1,24 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: cors-policy
+  namespace: envoy-ai-gateway-system
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: ai-gateway
+  cors:
+    allowOrigins:
+      - "https://chat.yacodata.com"
+      - "https://*.yacodata.com"
+      - "http://localhost:3000"
+      - "http://localhost:8000"
+    allowMethods:
+      - POST
+      - OPTIONS
+      - GET
+    allowHeaders:
+      - Content-Type
+      - Authorization
+    maxAge: "86400s"

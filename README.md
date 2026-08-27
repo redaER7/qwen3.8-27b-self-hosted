@@ -6,6 +6,7 @@ Self-host **Qwen/Qwen3.8-27B** — a 27B hybrid-attention LLM with 262k native c
 |--------|-------|----------|---------|
 | [**case_FP8**](case_FP8/README.md) | Kubernetes (KServe + Envoy AI Gateway) | 2× RTX 4080 Super 32GB (FP8, TP2) | 32768 |
 | [**case_FP16**](case_FP16/README.md) | Kubernetes (KServe + Envoy AI Gateway) | 1× RTX 6000 Pro 96GB (BF16, TP1) | 262144 (native) |
+| [**case_FP16_4090pro**](case_FP16_4090pro/README.md) | Kubernetes (KServe + Envoy AI Gateway) | 2× RTX 4090 Pro 48GB (BF16, TP2) | up to 262144 (context ladder) |
 | [**compose**](compose/README.md) | Docker Compose (single user) | 1× ≥40GB or 2× ≥24GB GPU | 8192 default |
 
 **Tags**: `qwen3.8-27b` `qwen3.8` `vllm` `kserve` `envoy-ai-gateway` `self-hosted-llm` `gpu-inference` `fp8`
@@ -42,6 +43,7 @@ The dense BF16 checkpoint (~52 GiB) does **not** fit 2× 32GB GPUs — it OOMs d
 ```
 ├── case_FP8/               # K8s: FP8 on 2× 32GB GPUs (active deployment)
 ├── case_FP16/              # K8s: dense BF16 on RTX 6000 Pro 96GB
+├── case_FP16_4090pro/      # K8s: dense BF16 on 2× RTX 4090 Pro 48GB (TP2) + context ladder
 ├── compose/                # Standalone single-user docker-compose (vLLM + NextChat)
 ├── k8s/                    # Shared Kubernetes infrastructure
 │   ├── k8s_control_plane/  #   K3s control plane setup
@@ -51,7 +53,7 @@ The dense BF16 checkpoint (~52 GiB) does **not** fit 2× 32GB GPUs — it OOMs d
 │   ├── model-image/        #   Optional: bake weights into a model image
 │   ├── frontend/nextchat/  #   NextChat web UI deployment
 │   └── hetzner-cp-node-socat.sh
-└── Tests/bench_concurrent.py  # concurrent load test
+└── Tests/                  # bench_concurrent.py + bench_matrix.py (context-ladder sweeps)
 ```
 
 ## Kubernetes Setup (shared infrastructure)

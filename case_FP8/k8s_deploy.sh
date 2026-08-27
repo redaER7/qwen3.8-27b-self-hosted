@@ -59,7 +59,11 @@ kubectl apply --server-side --force-conflicts -f /tmp/kserve.yaml || {
   kubectl apply --server-side -f /tmp/kserve.yaml
 }
 
-echo "=== 8a. Built-in LLMInferenceServiceConfigs ==="
+echo "=== 8a. Patch storage-initializer resources + restart controller ==="
+kubectl apply -f "${SCRIPT_DIR}/kserve/inferenceservice-config-patch.yaml"
+kubectl -n kserve rollout restart deployment kserve-controller-manager
+
+echo "=== 8b. Built-in LLMInferenceServiceConfigs ==="
 for f in config-llm-scheduler config-llm-template config-llm-router-route \
   config-llm-worker-data-parallel config-llm-decode-template \
   config-llm-decode-worker-data-parallel config-llm-prefill-template \
@@ -67,10 +71,10 @@ for f in config-llm-scheduler config-llm-template config-llm-router-route \
   kubectl apply -n kserve -f "https://raw.githubusercontent.com/kserve/kserve/v0.18.0/config/llmisvcconfig/${f}.yaml"
 done
 
-echo "=== 8b. Gateway API Inference Extension CRDs ==="
+echo "=== 8c. Gateway API Inference Extension CRDs ==="
 kubectl apply --server-side -f https://github.com/kubernetes-sigs/gateway-api-inference-extension/releases/latest/download/manifests.yaml
 
-echo "=== 8c. Enable InferencePool support in Envoy Gateway + restart ==="
+echo "=== 8d. Enable InferencePool support in Envoy Gateway + restart ==="
 helm upgrade --install eg oci://docker.io/envoyproxy/gateway-helm --version v1.8.2 \
   -n envoy-gateway-system \
   -f "${SCRIPT_DIR}/envoy-ai-gateway/envoy-gateway-values.yaml" \

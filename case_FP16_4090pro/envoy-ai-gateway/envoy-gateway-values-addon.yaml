@@ -1,0 +1,7 @@
+config:
+  envoyGateway:
+    extensionManager:
+      backendResources:
+        - group: inference.networking.k8s.io
+          kind: InferencePool
+          version: v1
