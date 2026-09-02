@@ -144,7 +144,24 @@ curl -s https://llm.yacodata.com/v1/chat/completions \
 
 Concurrent load test: [`Tests/bench_concurrent.py`](../Tests/bench_concurrent.py).
 
-## 8. Reference — Deploying the Stack
+## 8. Results (measured) — RTX PRO 6000 Blackwell
+
+Swept the full context ladder against the live endpoint (2026-09-01) with [`bench_matrix.py`](../Tests/bench_matrix.py) (concurrency 2–16, streaming on/off). Full record: [`results/summary-all-contexts.log`](results/summary-all-contexts.log) + [`results/index.csv`](results/index.csv).
+
+Headline clean runs (100% success):
+
+| ctx | in_frac | c | agg tok/s | TTFT p50/p95 | decode/stream |
+|---|---|---|---|---|---|
+| 8192 | 0.15 (~1k) | 16 | **213** | 1.3 / 1.3 s | 26 → 27 tok/s |
+| 8192 | 0.15 | 8 | **212** | 1.3 s | 26 → 27 |
+| 32768 | 0.1 (~3k) | 8 | **202** | 3.1 / 3.2 s | 25 |
+| 32768 | 0.1 | 16 | **202** | 3.2 s | 25 |
+| 131072 | 0.1 (13k) | 4 | 92 | 9.0 / 9.4 s | 23 |
+| 131072 | 0.1 | 2 | 50 | 5.2 s | 25 |
+
+Read the numbers as: sub-second-to-2s TTFT and ~26 tok/s per stream at practical prompts; aggregate ~202–213 tok/s through c16 for ≤32k windows; long context (131k) is batch/offline territory (~50–92 tok/s). Write-up: [Host Qwen3.8-27B Full Dense on an RTX PRO 6000 Blackwell](https://yacodata.com/en/blog/self-hosting-qwen3-27b-rtx6000-blackwell).
+
+## 9. Reference — Deploying the Stack
 
 ### Requirements
 
@@ -172,6 +189,8 @@ Same as case_FP8 — CP (Hetzner) and GPU node (Trooper AI) bridged via WireGuar
 | `kserve/llm-inferenceservice.yaml` | LLMInferenceService (combines model + workload) |
 | `kserve/endpoint-picker-config.yaml` | EPP scheduler scorer weights (available; wire-in at 2+ replicas) |
 | `epp-scheduler/` | EPP scorer weights reference |
+| `results/summary-all-contexts.log` | Measured benchmark summary (ctx 8k/32k/131k, c2–16) — RTX PRO 6000 Blackwell |
+| `results/index.csv` | Per-config raw results behind the summary |
 | `test.sh` | End-to-end validation through the public gateway |
 
 ### Quick Start
