@@ -1,5 +1,13 @@
 # Qwen3.8-27B Self-Hosted
 
+[![Qwen3.8-27B](https://img.shields.io/badge/model-Qwen3.8--27B-blue)](https://huggingface.co/Qwen/Qwen3.8-27B) [![vLLM](https://img.shields.io/badge/vLLM-green)](https://github.com/vllm-project/vllm) [![KServe](https://img.shields.io/badge/KServe-blue)](https://github.com/kserve/kserve) [![Envoy AI Gateway](https://img.shields.io/badge/Envoy%20AI%20Gateway-informational)](https://github.com/envoyproxy/ai-gateway) [![Self-hosted LLM](https://img.shields.io/badge/self--hosted--LLM-lightgrey)](https://github.com/redaER7/qwen3.8-27b-self-hosted)
+
+by **[Yacodata](https://yacodata.com)**
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=flat-square&logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/redaer7)
+
+
+
 Self-host **Qwen/Qwen3.8-27B** — a 27B hybrid-attention LLM with 262k native context — with vLLM, KServe, and the Envoy AI Gateway. Three ways to run it:
 
 | Option | Where | Hardware | Context |
@@ -8,8 +16,6 @@ Self-host **Qwen/Qwen3.8-27B** — a 27B hybrid-attention LLM with 262k native c
 | [**case_FP16**](case_FP16/README.md) | Kubernetes (KServe + Envoy AI Gateway) | 1× RTX 6000 Pro 96GB (BF16, TP1) | 262144 (native) |
 | [**case_FP16_4090pro**](case_FP16_4090pro/README.md) | Kubernetes (KServe + Envoy AI Gateway) | 2× RTX 4090 Pro 48GB (BF16, TP2) | up to 262144 (context ladder) |
 | [**compose**](compose/README.md) | Docker Compose (single user) | 1× ≥40GB or 2× ≥24GB GPU | 8192 default |
-
-**Tags**: `qwen3.8-27b` `qwen3.8` `vllm` `kserve` `envoy-ai-gateway` `self-hosted-llm` `gpu-inference` `fp8`
 
 ## The Model
 
